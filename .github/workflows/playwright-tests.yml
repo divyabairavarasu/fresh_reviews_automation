@@ -1,0 +1,175 @@
+name: Playwright Tests - Fresh Reviews [TEST-789]
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main, develop ]
+  schedule:
+    # Run tests daily at 2 AM UTC
+    - cron: '0 2 * * *'
+  workflow_dispatch:
+    inputs:
+      test_suite:
+        description: 'Test suite to run'
+        required: false
+        default: 'all'
+        type: choice
+        options:
+          - all
+          - smoke
+          - regression
+          - mobile
+          - a11y
+          - performance
+
+jobs:
+  test:
+    name: Playwright E2E Tests
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        browser: [chromium, firefox, webkit]
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Install Playwright Browsers
+        run: npx playwright install --with-deps ${{ matrix.browser }}
+
+      - name: Start application server
+        run: |
+          cd ../fresh_reviews
+          python3 -m http.server 8080 &
+          sleep 5
+        continue-on-error: true
+
+      - name: Wait for server
+        run: |
+          timeout 30 bash -c 'until curl -s http://localhost:8080; do sleep 1; done'
+
+      - name: Run Playwright tests
+        env:
+          BASE_URL: http://localhost:8080
+          TEST_USER_EMAIL: ${{ secrets.TEST_USER_EMAIL || 'alice@example.com' }}
+          TEST_USER_PASSWORD: ${{ secrets.TEST_USER_PASSWORD || 'password123' }}
+          JIRA_TICKET: TEST-789
+        run: |
+          if [ "${{ github.event.inputs.test_suite }}" = "smoke" ]; then
+            npm run test:smoke -- --project=${{ matrix.browser }}
+          elif [ "${{ github.event.inputs.test_suite }}" = "regression" ]; then
+            npm run test:regression -- --project=${{ matrix.browser }}
+          else
+            npm test -- --project=${{ matrix.browser }}
+          fi
+
+      - name: Upload test results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-report-${{ matrix.browser }}
+          path: |
+            reports/
+            test-results/
+          retention-days: 30
+
+      - name: Upload screenshots
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: screenshots-${{ matrix.browser }}-${{ github.run_number }}
+          path: screenshots/
+          retention-days: 7
+
+      - name: Publish test results
+        if: always()
+        uses: dorny/test-reporter@v1
+        with:
+          name: Playwright Tests (${{ matrix.browser }})
+          path: reports/junit-results.xml
+          reporter: java-junit
+          fail-on-error: false
+
+      - name: Comment PR with results
+        if: always() && github.event_name == 'pull_request'
+        uses: daun/playwright-report-comment@v3
+        with:
+          report-path: reports/html-report
+
+  update-jira:
+    name: Update JIRA Ticket
+    needs: test
+    if: always()
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Update JIRA with test results
+        if: env.JIRA_URL != ''
+        env:
+          JIRA_URL: ${{ secrets.JIRA_URL }}
+          JIRA_API_TOKEN: ${{ secrets.JIRA_API_TOKEN }}
+          JIRA_EMAIL: ${{ secrets.JIRA_EMAIL }}
+        run: |
+          if [ "${{ needs.test.result }}" = "success" ]; then
+            STATUS="✅ Tests Passed"
+          else
+            STATUS="❌ Tests Failed"
+          fi
+
+          COMMENT="🤖 **Automated Test Results**
+
+          **Status**: $STATUS
+          **Run**: [${{ github.run_id }}](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }})
+          **Branch**: ${{ github.ref_name }}
+          **Commit**: ${{ github.sha }}
+
+          _Automated test execution by GitHub Actions_"
+
+          curl -X POST "$JIRA_URL/rest/api/3/issue/TEST-789/comment" \
+            -H "Authorization: Basic $(echo -n $JIRA_EMAIL:$JIRA_API_TOKEN | base64)" \
+            -H "Content-Type: application/json" \
+            -d "{\"body\":{\"type\":\"doc\",\"version\":1,\"content\":[{\"type\":\"paragraph\",\"content\":[{\"type\":\"text\",\"text\":\"$COMMENT\"}]}]}}"
+
+  notify:
+    name: Send Notifications
+    needs: test
+    if: always()
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Send Slack notification
+        if: env.SLACK_WEBHOOK != ''
+        env:
+          SLACK_WEBHOOK: ${{ secrets.SLACK_WEBHOOK }}
+        run: |
+          if [ "${{ needs.test.result }}" = "success" ]; then
+            COLOR="good"
+            EMOJI=":white_check_mark:"
+          else
+            COLOR="danger"
+            EMOJI=":x:"
+          fi
+
+          curl -X POST $SLACK_WEBHOOK -H 'Content-Type: application/json' -d "{
+            \"attachments\": [{
+              \"color\": \"$COLOR\",
+              \"title\": \"$EMOJI Playwright Test Results [TEST-789]\",
+              \"text\": \"Fresh Reviews automation tests completed\",
+              \"fields\": [
+                {\"title\": \"Status\", \"value\": \"${{ needs.test.result }}\", \"short\": true},
+                {\"title\": \"Branch\", \"value\": \"${{ github.ref_name }}\", \"short\": true},
+                {\"title\": \"Run\", \"value\": \"<${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}|View Results>\", \"short\": false}
+              ]
+            }]
+          }"

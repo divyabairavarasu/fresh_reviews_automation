@@ -1,0 +1,47 @@
+{
+  "name": "fresh-reviews-automation",
+  "version": "1.0.0",
+  "description": "Playwright E2E automation tests for Fresh Reviews application - JIRA: TEST-789",
+  "main": "index.js",
+  "scripts": {
+    "test": "playwright test",
+    "test:headed": "playwright test --headed",
+    "test:debug": "playwright test --debug",
+    "test:ui": "playwright test --ui",
+    "test:chrome": "playwright test --project=chromium",
+    "test:firefox": "playwright test --project=firefox",
+    "test:safari": "playwright test --project=webkit",
+    "test:mobile": "playwright test --project=mobile",
+    "test:reviews": "playwright test tests/specs/reviews.spec.ts",
+    "test:smoke": "playwright test --grep @smoke",
+    "test:regression": "playwright test --grep @regression",
+    "report": "playwright show-report",
+    "report:open": "npx playwright show-report reports/html-report",
+    "codegen": "playwright codegen http://localhost:8080/reviews.html",
+    "install:browsers": "playwright install --with-deps"
+  },
+  "keywords": [
+    "playwright",
+    "e2e",
+    "automation",
+    "testing",
+    "fresh-reviews",
+    "TEST-789"
+  ],
+  "author": "QA Automation Team",
+  "license": "MIT",
+  "devDependencies": {
+    "@playwright/test": "^1.45.0",
+    "@types/node": "^20.14.0",
+    "@axe-core/playwright": "^4.9.1",
+    "typescript": "^5.5.0",
+    "eslint": "^8.57.0",
+    "@typescript-eslint/eslint-plugin": "^7.13.0",
+    "@typescript-eslint/parser": "^7.13.0",
+    "prettier": "^3.3.2"
+  },
+  "dependencies": {
+    "dotenv": "^16.4.5",
+    "faker": "^5.5.3"
+  }
+}
