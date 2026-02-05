@@ -1,7 +1,7 @@
-# JIRA Ticket: SCRUM-2
+# JIRA Ticket: SCRUM-3
 
 ## Summary
-Automate E2E Testing for Fresh Reviews Index Page (index.html)
+Automate E2E Testing for Fresh Reviews Search Page
 
 ## Issue Type
 Task
@@ -15,42 +15,42 @@ In Progress
 ## Description
 
 ### Overview
-Automate end-to-end testing for the Fresh Reviews application index/home page using Playwright.
+Automate end-to-end testing for the Fresh Reviews application search page using Playwright.
 
 ### Test URL
-http://localhost:8080/index.html
+http://localhost:8080/search.html
 
 ### Scope
-Comprehensive automation coverage for all user interactions on the index page including navigation, links, and page content.
+Comprehensive automation coverage for search functionality including filters, results display, and user interactions.
 
 ## Acceptance Criteria
 
 ### Page Load & Content
 - [ ] AC1: Verify page loads successfully
 - [ ] AC2: Verify page title is correct
-- [ ] AC3: Verify main content is visible
+- [ ] AC3: Verify search interface is visible
 - [ ] AC4: Verify navigation elements are present
 - [ ] AC5: Verify no console errors on page load
 
-### Navigation
-- [ ] AC6: Verify login link/button navigates to login page
-- [ ] AC7: Verify signup link/button navigates to signup page
-- [ ] AC8: Verify all navigation links are functional
+### Search Functionality
+- [ ] AC6: Verify search by keyword
+- [ ] AC7: Verify search filters work
+- [ ] AC8: Verify search results display correctly
+- [ ] AC9: Verify no results state
 
 ### Responsive Design
-- [ ] AC9: Verify page renders correctly on mobile (375px width)
-- [ ] AC10: Verify page renders correctly on tablet (768px width)
-- [ ] AC11: Verify page renders correctly on desktop (1920px width)
+- [ ] AC10: Verify page renders correctly on mobile (375px width)
+- [ ] AC11: Verify page renders correctly on tablet (768px width)
+- [ ] AC12: Verify page renders correctly on desktop (1920px width)
 
 ### Accessibility
-- [ ] AC12: Verify keyboard navigation works
-- [ ] AC13: Verify ARIA attributes are present
-- [ ] AC14: Verify focus indicators are visible
-- [ ] AC15: Verify color contrast meets WCAG standards
+- [ ] AC13: Verify keyboard navigation works
+- [ ] AC14: Verify ARIA attributes are present
+- [ ] AC15: Verify focus indicators are visible
 
 ### Performance
 - [ ] AC16: Verify page loads within 3 seconds
-- [ ] AC17: Verify no memory leaks
+- [ ] AC17: Verify search response time under 2 seconds
 
 ## Technical Requirements
 - [ ] Use Playwright with TypeScript
@@ -60,11 +60,11 @@ Comprehensive automation coverage for all user interactions on the index page in
 - [ ] Run tests in Chrome, Firefox, Safari
 
 ## Labels
-automation, playwright, e2e-testing, index-page, high-priority
+automation, playwright, e2e-testing, search-page, high-priority
 
 ## Components
 - Fresh Reviews Web Application
-- Index Page (index.html)
+- Search Page (search.html)
 
 ## Fix Version
 1.0.0
@@ -74,7 +74,7 @@ automation, playwright, e2e-testing, index-page, high-priority
 
 ## Links
 - **Repository**: https://github.com/divyabairavarasu/fresh_reviews_automation
-- **Application**: http://localhost:8080/index.html
+- **Application**: http://localhost:8080/search.html
 
 ---
 
